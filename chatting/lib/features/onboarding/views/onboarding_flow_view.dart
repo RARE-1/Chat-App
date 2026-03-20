@@ -231,7 +231,6 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 24),
           Text(
@@ -248,9 +247,11 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
             'This will take 30 seconds',
             style: TextStyle(color: palette.textMuted),
           ),
-          const Spacer(),
-          RippleIndicator(isDarkMode: isDarkMode),
-          const Spacer(),
+          Expanded(
+            child: Center(
+              child: RippleIndicator(isDarkMode: isDarkMode),
+            ),
+          ),
           TextButton(
             onPressed: _viewModel.skipConnection,
             child: Text(
