@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationType {
+  direct
+  group
+}
+
+enum ParticipantRole {
+  member
+  admin
+}
+
+enum MessageType {
+  text
+  image
+  video
+  file
+  system
+}
+
+enum MessageStatusState {
+  sent
+  delivered
+  read
+}
+
+model User {
+  id              String                    @id @default(uuid())
+  email           String                    @unique
+  passwordHash    String                    @map("password_hash")
+  displayName     String                    @map("display_name")
+  avatarUrl       String?                   @map("avatar_url")
+  isActive        Boolean                   @default(true) @map("is_active")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+  refreshTokens   RefreshToken[]
+  createdChats    Conversation[]            @relation("ConversationCreator")
+  messages        Message[]                 @relation("MessageSender")
+  participants    ConversationParticipant[]
+  messageStatuses MessageStatus[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @map("token_hash")
+  deviceName String?   @map("device_name")
+  ipAddress  String?   @map("ip_address")
+  userAgent  String?   @map("user_agent")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Conversation {
+  id            String                    @id @default(uuid())
+  type          ConversationType
+  title         String?
+  createdBy     String                    @map("created_by")
+  lastMessageId String?                   @unique @map("last_message_id")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  creator       User                      @relation("ConversationCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  participants  ConversationParticipant[]
+  messages      Message[]                 @relation("ConversationMessages")
+  lastMessage   Message?                  @relation("ConversationLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id                String          @id @default(uuid())
+  conversationId    String          @map("conversation_id")
+  userId            String          @map("user_id")
+  joinedAt          DateTime        @default(now()) @map("joined_at")
+  leftAt            DateTime?       @map("left_at")
+  role              ParticipantRole @default(member)
+  lastReadMessageId String?         @map("last_read_message_id")
+  conversation      Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadMessage   Message?        @relation("ParticipantLastReadMessage", fields: [lastReadMessageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id                     String                    @id @default(uuid())
+  conversationId         String                    @map("conversation_id")
+  senderId               String                    @map("sender_id")
+  type                   MessageType
+  content                String
+  replyToMessageId       String?                   @map("reply_to_message_id")
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+  deletedAt              DateTime?                 @map("deleted_at")
+  conversation           Conversation              @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  sender                 User                      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage         Message?                  @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  replies                Message[]                 @relation("MessageReplies")
+  media                  MessageMedia[]
+  statuses               MessageStatus[]
+  lastForConversation    Conversation?             @relation("ConversationLastMessage")
+  lastReadByParticipants ConversationParticipant[] @relation("ParticipantLastReadMessage")
+
+  @@map("messages")
+}
+
+model MessageMedia {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  url       String
+  mimeType  String   @map("mime_type")
+  size      Int
+  width     Int?
+  height    Int?
+  duration  Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_media")
+}
+
+model MessageStatus {
+  id        String             @id @default(uuid())
+  messageId String             @map("message_id")
+  userId    String             @map("user_id")
+  status    MessageStatusState
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  message   Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_statuses")
+}
