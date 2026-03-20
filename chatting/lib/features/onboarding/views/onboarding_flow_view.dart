@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../models/chat_preview.dart';
 import '../models/chat_message.dart';
 import '../models/onboarding_screen.dart';
+import '../models/room_preview.dart';
 import '../viewmodels/onboarding_view_model.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/glass_bottom_nav.dart';
@@ -308,58 +310,387 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 104),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 118),
+          child: _buildMainTabContent(palette),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: GlassBottomNav(
+            activeTab: _viewModel.activeTab,
+            onChanged: _viewModel.setActiveTab,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainTabContent(AppPalette palette) {
+    switch (_viewModel.activeTab) {
+      case 'home':
+        return _buildHomeTab(palette);
+      case 'chats':
+        return _buildChatsTab(palette);
+      case 'rooms':
+        return _buildRoomsTab(palette);
+      case 'profile':
+        return _buildProfileTab(palette);
+      default:
+        return _buildHomeTab(palette);
+    }
+  }
+
+  Widget _buildHomeTab(AppPalette palette) {
+    return ListView(
+      children: [
+        Text(
+          'Home',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'A calm command center for your messages and groups.',
+          style: TextStyle(color: palette.textMuted, fontSize: 14),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.indigo, AppTheme.violet],
+            ),
+          ),
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Chats',
+                'Your network is active',
                 style: TextStyle(
-                  color: palette.textPrimary,
-                  fontSize: 24,
+                  color: Colors.white,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: _viewModel.chats.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final chat = _viewModel.chats[index];
-                    return InkWell(
-                      onTap: _viewModel.openChat,
-                      borderRadius: BorderRadius.circular(18),
-                      child: Ink(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: palette.surfaceSoft,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Text(
-                          chat,
-                          style: TextStyle(
-                            color: palette.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              SizedBox(height: 10),
+              Text(
+                '12 unread messages across 4 conversations. 3 rooms are trending right now.',
+                style: TextStyle(
+                  color: Color(0xE6FFFFFF),
+                  height: 1.4,
                 ),
               ),
             ],
           ),
         ),
-        Positioned(
-          left: 18,
-          right: 18,
-          bottom: 18,
-          child: GlassBottomNav(
-            activeTab: _viewModel.activeTab,
-            onChanged: _viewModel.setActiveTab,
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: _InfoCard(
+                title: 'Online Now',
+                value: '24',
+                subtitle: 'Friends and creators',
+                palette: palette,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _InfoCard(
+                title: 'Rooms',
+                value: '08',
+                subtitle: 'Active communities',
+                palette: palette,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Jump back in',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
+        ),
+        const SizedBox(height: 12),
+        ..._viewModel.chats.take(2).map(
+          (chat) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ConversationCard(
+              title: chat.name,
+              subtitle: chat.lastMessage,
+              meta: chat.timeLabel,
+              palette: palette,
+              onTap: () => _viewModel.openChat(chat.name),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Popular rooms',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 170,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _viewModel.rooms.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final room = _viewModel.rooms[index];
+              return _RoomHighlightCard(room: room, palette: palette);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChatsTab(AppPalette palette) {
+    return ListView(
+      children: [
+        Text(
+          'Chats',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Direct messages with people and collaborators.',
+          style: TextStyle(color: palette.textMuted),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: palette.surfaceSoft,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: palette.stroke),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded, color: palette.textMuted),
+              const SizedBox(width: 12),
+              Text(
+                'Search DMs, people, notes',
+                style: TextStyle(color: palette.textMuted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          'Active users',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 92,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _viewModel.chats.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final chat = _viewModel.chats[index];
+              return _ActiveUserPill(chat: chat, palette: palette);
+            },
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          'Recent DMs',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._viewModel.chats.map(
+          (chat) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ChatListTile(
+              chat: chat,
+              palette: palette,
+              onTap: () => _viewModel.openChat(chat.name),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoomsTab(AppPalette palette) {
+    return ListView(
+      children: [
+        Text(
+          'Rooms',
+          style: TextStyle(
+            color: palette.textPrimary,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Group chats and communities you can drop into anytime.',
+          style: TextStyle(color: palette.textMuted),
+        ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: palette.surfaceSoft,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: palette.stroke),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Featured community',
+                style: TextStyle(
+                  color: palette.textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Launch Lounge',
+                style: TextStyle(
+                  color: palette.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Where builders share progress, blockers, and product feedback in real time.',
+                style: TextStyle(color: palette.textMuted, height: 1.4),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        ..._viewModel.rooms.map(
+          (room) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _RoomTile(
+              room: room,
+              palette: palette,
+              onTap: () => _viewModel.openChat(room.name),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileTab(AppPalette palette) {
+    return ListView(
+      children: [
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 92,
+                height: 92,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [AppTheme.indigo, AppTheme.violet],
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'RS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _viewModel.form.name.isEmpty ? 'Rohit Sharma' : _viewModel.form.name,
+                style: TextStyle(
+                  color: palette.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _viewModel.form.email.isEmpty ? '@rohit' : _viewModel.form.email,
+                style: TextStyle(color: palette.textMuted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: _InfoCard(
+                title: 'DMs',
+                value: '128',
+                subtitle: 'Total threads',
+                palette: palette,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _InfoCard(
+                title: 'Groups',
+                value: '16',
+                subtitle: 'Joined rooms',
+                palette: palette,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _ProfileSection(
+          title: 'Profile',
+          palette: palette,
+          children: const [
+            _ProfileRow(label: 'Display name', value: 'Rohit Sharma'),
+            _ProfileRow(label: 'Status', value: 'Building quietly'),
+            _ProfileRow(label: 'Theme', value: 'System'),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _ProfileSection(
+          title: 'Preferences',
+          palette: palette,
+          children: const [
+            _ProfileRow(label: 'Notifications', value: 'Mentions only'),
+            _ProfileRow(label: 'Privacy', value: 'Friends and rooms'),
+            _ProfileRow(label: 'Media quality', value: 'High'),
+          ],
         ),
       ],
     );
@@ -382,9 +713,9 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
               ),
               const SizedBox(width: 4),
-              const Text(
-                'John',
-                style: TextStyle(
+              Text(
+                _viewModel.selectedChatName,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -457,6 +788,495 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.palette,
+  });
+
+  final String title;
+  final String value;
+  final String subtitle;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: palette.surfaceSoft,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: palette.stroke),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: palette.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(subtitle, style: TextStyle(color: palette.textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConversationCard extends StatelessWidget {
+  const _ConversationCard({
+    required this.title,
+    required this.subtitle,
+    required this.meta,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String meta;
+  final AppPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Ink(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: palette.surfaceSoft,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: palette.stroke),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppTheme.indigo, AppTheme.violet],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                title.substring(0, 1),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: palette.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: palette.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(meta, style: TextStyle(color: palette.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoomHighlightCard extends StatelessWidget {
+  const _RoomHighlightCard({
+    required this.room,
+    required this.palette,
+  });
+
+  final RoomPreview room;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: palette.surfaceSoft,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: palette.stroke),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            room.name,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            room.topic,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: palette.textMuted, height: 1.35),
+          ),
+          const Spacer(),
+          Text(room.membersLabel, style: TextStyle(color: palette.textPrimary)),
+          const SizedBox(height: 4),
+          Text(room.lastActivity, style: TextStyle(color: palette.textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveUserPill extends StatelessWidget {
+  const _ActiveUserPill({
+    required this.chat,
+    required this.palette,
+  });
+
+  final ChatPreview chat;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppTheme.indigo, AppTheme.violet],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                chat.name.substring(0, 1),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (chat.isOnline)
+              Positioned(
+                right: 2,
+                bottom: 2,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          chat.name.split(' ').first,
+          style: TextStyle(color: palette.textPrimary, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChatListTile extends StatelessWidget {
+  const _ChatListTile({
+    required this.chat,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final ChatPreview chat;
+  final AppPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Ink(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: palette.surfaceSoft,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: palette.stroke),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppTheme.indigo, AppTheme.violet],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                chat.name.substring(0, 1),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          chat.name,
+                          style: TextStyle(
+                            color: palette.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        chat.timeLabel,
+                        style: TextStyle(color: palette.textMuted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    chat.lastMessage,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: palette.textMuted),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    chat.handle,
+                    style: TextStyle(color: palette.textMuted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (chat.unreadCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: const BoxDecoration(
+                  color: AppTheme.indigo,
+                  borderRadius: BorderRadius.all(Radius.circular(999)),
+                ),
+                child: Text(
+                  '${chat.unreadCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoomTile extends StatelessWidget {
+  const _RoomTile({
+    required this.room,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final RoomPreview room;
+  final AppPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Ink(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: palette.surfaceSoft,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: palette.stroke),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  colors: [AppTheme.indigo, AppTheme.violet],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.groups_rounded,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.name,
+                    style: TextStyle(
+                      color: palette.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    room.topic,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: palette.textMuted),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${room.membersLabel}  •  ${room.lastActivity}',
+                    style: TextStyle(color: palette.textMuted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileSection extends StatelessWidget {
+  const _ProfileSection({
+    required this.title,
+    required this.palette,
+    required this.children,
+  });
+
+  final String title;
+  final AppPalette palette;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: palette.surfaceSoft,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: palette.stroke),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppTheme.colorsOf(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: palette.textMuted),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

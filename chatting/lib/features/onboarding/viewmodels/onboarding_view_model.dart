@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../models/chat_preview.dart';
 import '../models/chat_message.dart';
 import '../models/nearby_user.dart';
 import '../models/onboarding_form.dart';
 import '../models/onboarding_screen.dart';
+import '../models/room_preview.dart';
 
 class OnboardingViewModel extends ChangeNotifier {
   OnboardingViewModel() {
@@ -21,6 +23,7 @@ class OnboardingViewModel extends ChangeNotifier {
   OnboardingScreen _screen = OnboardingScreen.splash;
   String _activeTab = 'home';
   String _input = '';
+  String _selectedChatName = 'John';
   OnboardingForm _form = const OnboardingForm();
 
   final List<ChatMessage> _messages = [
@@ -34,11 +37,64 @@ class OnboardingViewModel extends ChangeNotifier {
     NearbyUser(name: 'Neha'),
   ];
 
-  final List<String> chats = const ['John', 'Alice'];
+  final List<ChatPreview> chats = const [
+    ChatPreview(
+      name: 'John Carter',
+      handle: '@johnny',
+      lastMessage: 'Send me the deck when you are free.',
+      timeLabel: '2m',
+      unreadCount: 3,
+      isOnline: true,
+    ),
+    ChatPreview(
+      name: 'Alice Ray',
+      handle: '@alice',
+      lastMessage: 'That onboarding flow looks so much better now.',
+      timeLabel: '18m',
+      unreadCount: 1,
+      isOnline: true,
+    ),
+    ChatPreview(
+      name: 'Neha Singh',
+      handle: '@neha',
+      lastMessage: 'Let us sync after standup.',
+      timeLabel: '1h',
+      isOnline: false,
+    ),
+    ChatPreview(
+      name: 'Sam Wilson',
+      handle: '@sam',
+      lastMessage: 'Voice note sent',
+      timeLabel: '3h',
+      isOnline: true,
+    ),
+  ];
+
+  final List<RoomPreview> rooms = const [
+    RoomPreview(
+      name: 'Design Circle',
+      topic: 'UI critiques, motion, launch polish',
+      membersLabel: '18 members',
+      lastActivity: 'Active now',
+    ),
+    RoomPreview(
+      name: 'Startup Room',
+      topic: 'Growth ideas and daily wins',
+      membersLabel: '42 members',
+      lastActivity: '12 new messages',
+    ),
+    RoomPreview(
+      name: 'Flutter Guild',
+      topic: 'Widgets, architecture, releases',
+      membersLabel: '27 members',
+      lastActivity: 'Updated 8m ago',
+    ),
+  ];
 
   OnboardingScreen get screen => _screen;
   String get activeTab => _activeTab;
   String get input => _input;
+  String get selectedChatName => _selectedChatName;
   OnboardingForm get form => _form;
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   List<NearbyUser> get nearbyUsers => List.unmodifiable(_nearbyUsers);
@@ -88,7 +144,10 @@ class OnboardingViewModel extends ChangeNotifier {
     setScreen(OnboardingScreen.chatList);
   }
 
-  void openChat() {
+  void openChat([String? chatName]) {
+    if (chatName != null) {
+      _selectedChatName = chatName;
+    }
     setScreen(OnboardingScreen.chat);
   }
 
