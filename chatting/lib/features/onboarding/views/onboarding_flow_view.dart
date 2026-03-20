@@ -310,7 +310,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 118),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
           child: _buildMainTabContent(palette),
         ),
         Positioned(
@@ -343,117 +343,101 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
 
   Widget _buildHomeTab(AppPalette palette) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 120),
       children: [
-        Text(
-          'Home',
-          style: TextStyle(
-            color: palette.textPrimary,
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'A calm command center for your messages and groups.',
-          style: TextStyle(color: palette.textMuted, fontSize: 14),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppTheme.indigo, AppTheme.violet],
-            ),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your network is active',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                '12 unread messages across 4 conversations. 3 rooms are trending right now.',
-                style: TextStyle(
-                  color: Color(0xE6FFFFFF),
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
         Row(
           children: [
             Expanded(
-              child: _InfoCard(
-                title: 'Online Now',
-                value: '24',
-                subtitle: 'Friends and creators',
-                palette: palette,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Good evening',
+                    style: TextStyle(
+                      color: palette.textMuted,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Ready to connect?',
+                    style: TextStyle(
+                      color: palette.textPrimary,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _InfoCard(
-                title: 'Rooms',
-                value: '08',
-                subtitle: 'Active communities',
-                palette: palette,
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: palette.surfaceSoft,
+                shape: BoxShape.circle,
+                border: Border.all(color: palette.stroke),
+              ),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                color: palette.textPrimary,
+                size: 20,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        Text(
-          'Jump back in',
-          style: TextStyle(
-            color: palette.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+        const SizedBox(height: 24),
+        _SectionTitle(title: 'Hype Up', emoji: '🔥', palette: palette),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 88,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: const [
+              _HypeCard(title: 'Music', activity: '12 active'),
+              SizedBox(width: 12),
+              _HypeCard(title: 'Startup', activity: '18 active'),
+              SizedBox(width: 12),
+              _HypeCard(title: 'Crypto', activity: '09 active'),
+              SizedBox(width: 12),
+              _HypeCard(title: 'Gaming', activity: '21 active'),
+            ],
           ),
         ),
+        const SizedBox(height: 18),
+        _SectionTitle(title: 'Jump Back In', emoji: '⏪', palette: palette),
         const SizedBox(height: 12),
         ..._viewModel.chats.take(2).map(
           (chat) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _ConversationCard(
-              title: chat.name,
-              subtitle: chat.lastMessage,
-              meta: chat.timeLabel,
+            child: _JumpBackTile(
+              chat: chat,
               palette: palette,
+              subtitle: 'Continue chat',
               onTap: () => _viewModel.openChat(chat.name),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Popular rooms',
-          style: TextStyle(
-            color: palette.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _JumpBackTile(
+            chat: _viewModel.chats[2],
+            palette: palette,
+            subtitle: 'Continue chat',
+            onTap: () => _viewModel.openChat(_viewModel.chats[2].name),
           ),
         ),
+        const SizedBox(height: 6),
+        _SectionTitle(title: 'Explore', emoji: '🌍', palette: palette),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 170,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _viewModel.rooms.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final room = _viewModel.rooms[index];
-              return _RoomHighlightCard(room: room, palette: palette);
-            },
+        ..._viewModel.nearbyUsers.map(
+          (user) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _ExploreUserTile(
+              name: user.name,
+              palette: palette,
+              onTap: () {},
+            ),
           ),
         ),
       ],
@@ -462,26 +446,13 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
 
   Widget _buildChatsTab(AppPalette palette) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 120),
       children: [
-        Text(
-          'Chats',
-          style: TextStyle(
-            color: palette.textPrimary,
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Direct messages with people and collaborators.',
-          style: TextStyle(color: palette.textMuted),
-        ),
-        const SizedBox(height: 18),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: palette.surfaceSoft,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(999),
             border: Border.all(color: palette.stroke),
           ),
           child: Row(
@@ -489,7 +460,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
               Icon(Icons.search_rounded, color: palette.textMuted),
               const SizedBox(width: 12),
               Text(
-                'Search DMs, people, notes',
+                'Search messages...',
                 style: TextStyle(color: palette.textMuted),
               ),
             ],
@@ -497,11 +468,11 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
         ),
         const SizedBox(height: 22),
         Text(
-          'Active users',
+          'Active',
           style: TextStyle(
-            color: palette.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+            color: palette.textMuted,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 12),
@@ -530,8 +501,9 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
         ..._viewModel.chats.map(
           (chat) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _ChatListTile(
-              chat: chat,
+            child: _RecentDmTile(
+              name: chat.name.split(' ').first,
+              timeLabel: chat.timeLabel,
               palette: palette,
               onTap: () => _viewModel.openChat(chat.name),
             ),
@@ -543,6 +515,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
 
   Widget _buildRoomsTab(AppPalette palette) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 120),
       children: [
         Text(
           'Rooms',
@@ -610,6 +583,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
 
   Widget _buildProfileTab(AppPalette palette) {
     return ListView(
+      padding: const EdgeInsets.only(bottom: 120),
       children: [
         Center(
           child: Column(
@@ -836,6 +810,215 @@ class _InfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(subtitle, style: TextStyle(color: palette.textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({
+    required this.title,
+    required this.emoji,
+    required this.palette,
+  });
+
+  final String title;
+  final String emoji;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '$emoji $title',
+      style: TextStyle(
+        color: palette.textPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+class _HypeCard extends StatelessWidget {
+  const _HypeCard({
+    required this.title,
+    required this.activity,
+  });
+
+  final String title;
+  final String activity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 148,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.indigo, AppTheme.violet],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            activity,
+            style: const TextStyle(
+              color: Color(0xD9FFFFFF),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _JumpBackTile extends StatelessWidget {
+  const _JumpBackTile({
+    required this.chat,
+    required this.palette,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final ChatPreview chat;
+  final AppPalette palette;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: palette.surfaceSoft,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: palette.stroke),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.indigo,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                chat.name.substring(0, 1),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  chat.name.split(' ').first,
+                  style: TextStyle(
+                    color: palette.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: palette.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExploreUserTile extends StatelessWidget {
+  const _ExploreUserTile({
+    required this.name,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final String name;
+  final AppPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: palette.surfaceSoft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: palette.stroke),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.indigo,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              name.substring(0, 1),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: TextStyle(
+                color: palette.textPrimary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onTap,
+            style: TextButton.styleFrom(
+              backgroundColor: AppTheme.indigo,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+            child: const Text(
+              'View',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );
@@ -1124,6 +1307,56 @@ class _ChatListTile extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentDmTile extends StatelessWidget {
+  const _RecentDmTile({
+    required this.name,
+    required this.timeLabel,
+    required this.palette,
+    required this.onTap,
+  });
+
+  final String name;
+  final String timeLabel;
+  final AppPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: palette.surfaceSoft,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: palette.stroke),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              name,
+              style: TextStyle(
+                color: palette.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              timeLabel,
+              style: TextStyle(
+                color: palette.textMuted,
+                fontSize: 12,
+              ),
+            ),
           ],
         ),
       ),
