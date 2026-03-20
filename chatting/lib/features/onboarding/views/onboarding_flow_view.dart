@@ -10,14 +10,7 @@ import '../widgets/nearby_user_tile.dart';
 import '../widgets/ripple_indicator.dart';
 
 class OnboardingFlowView extends StatefulWidget {
-  const OnboardingFlowView({
-    super.key,
-    required this.isDarkMode,
-    required this.onToggleTheme,
-  });
-
-  final bool isDarkMode;
-  final VoidCallback onToggleTheme;
+  const OnboardingFlowView({super.key});
 
   @override
   State<OnboardingFlowView> createState() => _OnboardingFlowViewState();
@@ -57,6 +50,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
   @override
   Widget build(BuildContext context) {
     final palette = AppTheme.colorsOf(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: _viewModel,
@@ -72,33 +66,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
               ),
             ),
             child: SafeArea(
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 375,
-                  constraints:
-                      const BoxConstraints(maxWidth: 420, maxHeight: 720),
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: palette.shellBackground,
-                    borderRadius: BorderRadius.circular(40),
-                    border: Border.all(color: palette.stroke),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.isDarkMode
-                            ? const Color(0xCC000000)
-                            : const Color(0x220F172A),
-                        blurRadius: 60,
-                        offset: const Offset(0, 20),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(40),
-                    child: _buildScreen(context, palette),
-                  ),
-                ),
-              ),
+              child: _buildScreen(context, palette, isDarkMode),
             ),
           ),
         );
@@ -106,27 +74,33 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildScreen(BuildContext context, AppPalette palette) {
+  Widget _buildScreen(
+    BuildContext context,
+    AppPalette palette,
+    bool isDarkMode,
+  ) {
     switch (_viewModel.screen) {
       case OnboardingScreen.splash:
         return _buildSplash();
       case OnboardingScreen.welcome:
-        return _buildWelcome(context, palette);
+        return _buildWelcome(palette);
       case OnboardingScreen.register:
-        return _buildRegister(context, palette);
+        return _buildRegister(palette);
       case OnboardingScreen.connect:
-        return _buildConnect(context, palette);
+        return _buildConnect(palette, isDarkMode);
       case OnboardingScreen.found:
-        return _buildFound(context, palette);
+        return _buildFound(palette);
       case OnboardingScreen.chatList:
-        return _buildChatList(context, palette);
+        return _buildChatList(palette);
       case OnboardingScreen.chat:
-        return _buildChat(context, palette);
+        return _buildChat(palette);
     }
   }
 
   Widget _buildSplash() {
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -160,18 +134,11 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildWelcome(BuildContext context, AppPalette palette) {
+  Widget _buildWelcome(AppPalette palette) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: _ThemeToggleButton(
-              isDarkMode: widget.isDarkMode,
-              onPressed: widget.onToggleTheme,
-            ),
-          ),
           const Spacer(),
           Column(
             children: [
@@ -211,24 +178,15 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildRegister(BuildContext context, AppPalette palette) {
+  Widget _buildRegister(AppPalette palette) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => _viewModel.setScreen(OnboardingScreen.welcome),
-                icon: Icon(Icons.arrow_back, color: palette.textPrimary),
-              ),
-              const Spacer(),
-              _ThemeToggleButton(
-                isDarkMode: widget.isDarkMode,
-                onPressed: widget.onToggleTheme,
-              ),
-            ],
+          IconButton(
+            onPressed: () => _viewModel.setScreen(OnboardingScreen.welcome),
+            icon: Icon(Icons.arrow_back, color: palette.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
@@ -269,18 +227,11 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildConnect(BuildContext context, AppPalette palette) {
+  Widget _buildConnect(AppPalette palette, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: _ThemeToggleButton(
-              isDarkMode: widget.isDarkMode,
-              onPressed: widget.onToggleTheme,
-            ),
-          ),
           const SizedBox(height: 24),
           Text(
             "Let's connect nearby",
@@ -289,6 +240,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
               fontSize: 24,
               fontWeight: FontWeight.w700,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
@@ -296,7 +248,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
             style: TextStyle(color: palette.textMuted),
           ),
           const Spacer(),
-          RippleIndicator(isDarkMode: widget.isDarkMode),
+          RippleIndicator(isDarkMode: isDarkMode),
           const Spacer(),
           TextButton(
             onPressed: _viewModel.skipConnection,
@@ -310,28 +262,19 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildFound(BuildContext context, AppPalette palette) {
+  Widget _buildFound(AppPalette palette) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'People nearby',
-                style: TextStyle(
-                  color: palette.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              _ThemeToggleButton(
-                isDarkMode: widget.isDarkMode,
-                onPressed: widget.onToggleTheme,
-              ),
-            ],
+          Text(
+            'People nearby',
+            style: TextStyle(
+              color: palette.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -359,30 +302,21 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildChatList(BuildContext context, AppPalette palette) {
+  Widget _buildChatList(AppPalette palette) {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 96),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 104),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'Chats',
-                    style: TextStyle(
-                      color: palette.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  _ThemeToggleButton(
-                    isDarkMode: widget.isDarkMode,
-                    onPressed: widget.onToggleTheme,
-                  ),
-                ],
+              Text(
+                'Chats',
+                style: TextStyle(
+                  color: palette.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -429,7 +363,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
     );
   }
 
-  Widget _buildChat(BuildContext context, AppPalette palette) {
+  Widget _buildChat(AppPalette palette) {
     return Column(
       children: [
         Container(
@@ -453,11 +387,6 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
-              ),
-              const Spacer(),
-              _ThemeToggleButton(
-                isDarkMode: widget.isDarkMode,
-                onPressed: widget.onToggleTheme,
               ),
             ],
           ),
@@ -526,37 +455,6 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ThemeToggleButton extends StatelessWidget {
-  const _ThemeToggleButton({
-    required this.isDarkMode,
-    required this.onPressed,
-  });
-
-  final bool isDarkMode;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = AppTheme.colorsOf(context);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.surfaceSoft,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: palette.stroke),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(
-          isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-          color: palette.textPrimary,
-        ),
-        tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
-      ),
     );
   }
 }
