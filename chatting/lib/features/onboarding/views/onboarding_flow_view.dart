@@ -170,7 +170,7 @@ class _OnboardingFlowViewState extends State<OnboardingFlowView> {
             ),
             child: Text(
               'Login',
-              style: TextStyle(color: palette.textPrimary.withOpacity(0.82)),
+              style: TextStyle(color: palette.textPrimary.withValues(alpha: 0.82)),
             ),
           ),
         ],

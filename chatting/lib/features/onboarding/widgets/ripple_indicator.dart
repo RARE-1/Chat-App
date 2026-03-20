@@ -94,7 +94,7 @@ class _RipplePainter extends CustomPainter {
       final radius = (size.width * 0.5) * scale;
 
       final paint = Paint()
-        ..color = AppTheme.indigo.withOpacity(opacity)
+        ..color = AppTheme.indigo.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2;
 
